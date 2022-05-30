@@ -24,6 +24,32 @@ export default class AppUpdater {
   }
 }
 
+export async function isProcessRunning(processName: string): Promise<boolean> {
+  const cmd = (() => {
+    switch (process.platform) {
+      case 'win32':
+        return `tasklist`;
+      case 'darwin':
+        return `ps axco pid,command | grep ${processName}`;
+      case 'linux':
+        return `ps -A`;
+      default:
+        return false;
+    }
+  })();
+
+  return new Promise((resolve, reject) => {
+    require('child_process').exec(
+      cmd,
+      (err: Error, stdout: string, stderr: string) => {
+        if (err) resolve(false);
+
+        resolve(true);
+      }
+    );
+  });
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 const parseKeycode = (keycode: number) => {
@@ -99,10 +125,6 @@ const createWindow = async () => {
     if (mainWindow) {
       mainWindow.webContents.send('keyListener', parseKeycode(e.keycode));
     }
-
-    if (e.keycode === UiohookKey.Escape) {
-      process.exit(0);
-    }
   });
 
   uIOhook.on('mousemove', (e) => {
@@ -110,6 +132,12 @@ const createWindow = async () => {
   });
 
   uIOhook.start();
+
+  const checkInterval = setInterval(async () => {
+    const isLOLRunning = await isProcessRunning('LeagueofLegends');
+    console.log(isLOLRunning);
+    mainWindow?.webContents.send('lolListener', isLOLRunning);
+  }, 5000);
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
@@ -124,6 +152,7 @@ const createWindow = async () => {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+    clearInterval(checkInterval);
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);

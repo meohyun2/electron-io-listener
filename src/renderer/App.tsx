@@ -17,6 +17,9 @@ const Hello = () => {
     (event: string, value: { x: number; y: number }) =>
       setMouseLocation({ x: value.x, y: value.y })
   );
+  window.electron.ipcRenderer.updateLolRunning?.(
+    (event: string, value: boolean) => setLolRunning(value)
+  );
   return (
     <div>
       <h1>IO Listener Testing</h1>

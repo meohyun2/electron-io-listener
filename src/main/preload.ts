@@ -23,5 +23,8 @@ contextBridge.exposeInMainWorld('electron', {
     updateMouse: (callback: () => void) => {
       ipcRenderer.on('mouseListener', callback);
     },
+    updateLolRunning: (callback: () => void) => {
+      ipcRenderer.on('lolListener', callback);
+    },
   },
 });
